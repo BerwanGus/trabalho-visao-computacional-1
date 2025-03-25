@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload e Exibição de Imagem</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 20px;
+        }
+        #image-container {
+            margin-top: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        img {
+            max-width: 100%;
+            height: auto;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <h2>Carregar e Exibir Imagem</h2>
+    <input type="file" id="imageInput" accept="image/*">
+    <div id="image-container">
+        <img id="preview" src="" alt="Imagem carregada">
+    </div>
+    <br>
+    <button onclick="clearImage()">Limpar</button>
+    <button onclick="downloadImage()">Baixar</button>
+    <button onclick="uploadImage('upload/')">Original</button>
+    <button onclick="uploadImage('upload/blur')">Blur</button>
+    <button onclick="uploadImage('upload/sharpen')">Sharpen</button>
+    <button onclick="uploadImage('upload/rotate')">Rotate</button>
+
+    <script>
+        const imageInput = document.getElementById('imageInput');
+        const preview = document.getElementById('preview');
+
+        imageInput.addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    preview.src = e.target.result;
+                    preview.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        function clearImage() {
+            preview.src = '';
+            preview.style.display = 'none';
+            imageInput.value = '';
+        }
+
+        function downloadImage() {
+            if (preview.src) {
+                const link = document.createElement('a');
+                link.href = preview.src;
+                link.download = 'imagem_carregada.png';
+                link.click();
+            }
+        }
+
+        function hideImage() {
+            preview.style.display = 'none';
+        }
+
+        function uploadImage(url) {
+            const file = imageInput.files[0];
+            if (!file) {
+                alert("Selecione uma imagem antes de enviar.");
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append("file", file);
+            
+            fetch("http://localhost:5000/" + url, {
+                method: "POST",
+                body: formData
+            })
+            .then(response => response.bytes())
+            .then(data => {
+                const blob = new Blob([data], { type: "image/jpeg" });
+                const url = URL.createObjectURL(blob);
+                preview.src = url;
+                preview.style.display = 'block';
+            })
+            .catch(error => console.error("Erro ao enviar imagem:", error));
+        }
+    </script>
+</body>
+</html>
